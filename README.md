@@ -16,5 +16,12 @@
 
 ## Machine Learning Basics
 
-- [PDF Exercise](/src/T02_ml_basics/S1_linear_regression_student.pdf)
-- [PDF Solution](/src/T02_ml_basics/S1_linear_regression_solution.pdf)
+### Linear Regression
+
+- [PDF Exercise](/src/T02_ml_basics/S1/linear_regression_student.pdf)
+- [PDF Solution](/src/T02_ml_basics/S1/linear_regression_solution.pdf)
+
+### Classification
+
+- [PDF Exercise](/src/T02_ml_basics/S2/classification_student.pdf)
+- [PDF Solution](/src/T02_ml_basics/S2/classification_solution.pdf)

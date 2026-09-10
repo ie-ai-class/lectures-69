@@ -1,0 +1,354 @@
+\documentclass[12pt, a4paper]{article}
+
+% ── Packages ──────────────────────────────────────────────────────────────────
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{enumitem}
+\usepackage{parskip}
+
+\geometry{margin=2.5cm}
+
+% ══════════════════════════════════════════════════════════════════════════════
+% ── Student-mode switch ───────────────────────────────────────────────────────
+%
+%   Compile with: \def\studentflag{1}\input{...}  → student version
+%   Compile with: \input{...}                      → instructor version
+%
+\newif\ifstudentmode
+\studentmodefalse       % default: instructor mode
+
+\ifx\studentflag\undefined
+  % no flag passed — keep studentmodefalse
+\else
+  \studentmodetrue
+\fi
+% ══════════════════════════════════════════════════════════════════════════════
+
+% ── Student-mode macros ───────────────────────────────────────────────────────
+%
+%  \sol[<width>]{<math content>}   — blank inside a math environment
+%  \soleq[<height>]{<math content>} — blank replacing an entire display equation
+%
+\newcommand{\sol}[2][6cm]{%
+  \ifstudentmode
+    \underline{\hspace{#1}}%
+  \else
+    {#2}%
+  \fi
+}
+
+\newcommand{\soleq}[2][3cm]{%
+  \ifstudentmode
+    \par\vspace{4pt}%
+    \noindent\rule{\linewidth}{0.5pt}\\[#1]%
+    \noindent\rule{\linewidth}{0.5pt}%
+    \par\vspace{4pt}%
+  \else
+    \[#2\]%
+  \fi
+}
+% ──────────────────────────────────────────────────────────────────────────────
+
+% ── Colors & boxes ────────────────────────────────────────────────────────────
+\definecolor{mainblue}{RGB}{30, 100, 180}
+\definecolor{boxbg}{RGB}{235, 243, 255}
+\definecolor{notebg}{RGB}{255, 248, 230}
+
+\tcbuselibrary{skins, breakable}
+
+\newtcolorbox{resultbox}{
+  colback=boxbg, colframe=mainblue,
+  boxrule=1.2pt, arc=4pt,
+  title={Result},
+  fonttitle=\bfseries\color{white},
+  coltitle=white, attach boxed title to top left={yshift=-2mm, xshift=4mm},
+  boxed title style={colback=mainblue, arc=3pt}
+}
+
+\newtcolorbox{notebox}{
+  colback=notebg, colframe=orange!70!black,
+  boxrule=1pt, arc=4pt,
+  left=4pt, right=4pt
+}
+
+% ── Theorem environments ───────────────────────────────────────────────────────
+\theoremstyle{definition}
+\newtheorem{example}{Example}[section]
+
+% ── Math macros ───────────────────────────────────────────────────────────────
+\newcommand{\bth}{\boldsymbol{\theta}}
+\newcommand{\bx}{\mathbf{x}}
+\newcommand{\bX}{\mathbf{X}}
+\newcommand{\by}{\mathbf{y}}
+\newcommand{\bw}{\mathbf{w}}
+\newcommand{\yhat}{\hat{y}}
+\newcommand{\sigmoid}{\sigma}
+
+% ── Document ──────────────────────────────────────────────────────────────────
+\begin{document}
+
+\begin{center}
+  {\LARGE \textbf{Section 1.2: Logistic Regression}} \\[0.5em]
+  {\large AI Class — Lecture Notes}%
+  \ifstudentmode
+    \quad {\normalsize\color{gray}[Student Copy]}%
+  \fi
+\end{center}
+
+\vspace{1em}
+\hrule
+\vspace{1.5em}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{From Regression to Classification}
+
+In Section~1.1 we predicted a \emph{continuous} output $y \in \mathbb{R}$.
+Now suppose the output is a \textbf{binary label}: $y \in \{0, 1\}$.
+For example, we might ask:
+
+\begin{center}
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabular}{ll}
+    \toprule
+    \textbf{Input $x$} & \textbf{Label $y$}        \\
+    \midrule
+    Tumor size (cm)    & 0 = benign, 1 = malignant \\
+    Hours studied      & 0 = fail, 1 = pass        \\
+    Email features     & 0 = not spam, 1 = spam    \\
+    \bottomrule
+  \end{tabular}
+\end{center}
+
+\textbf{Why not use linear regression?}
+If we fit $\yhat = wx + b$ directly and threshold at $0.5$, the model is
+not constrained: it can predict values far below 0 or above 1, which are
+meaningless as probabilities and sensitive to outliers.
+What we really want is a model that outputs a \emph{probability}:
+\[
+  \hat{p} = P(y = 1 \mid x) \in (0, 1).
+\]
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{The Sigmoid Function: Motivation via Log-Odds}
+
+A natural way to build a probability model is to assume that the
+\textbf{log-odds} (logit) of the event is a linear function of the input.
+
+The \textbf{odds} of an event with probability $p$ are defined as:
+\[
+  \text{odds} = \frac{p}{1 - p}.
+\]
+
+We assume the \textbf{log-odds} are linear:
+
+\begin{equation}
+  \log \frac{p}{1-p} = wx + b.
+  \label{eq:logodds}
+\end{equation}
+
+This is a reasonable model: the log-odds can range over all of $\mathbb{R}$,
+which matches a linear function perfectly.
+
+\subsection{Solving for \texorpdfstring{$p$}{p}}
+
+Exponentiating both sides of \eqref{eq:logodds} and solving for $p$:
+
+\begin{align*}
+  \frac{p}{1-p}     & = e^{wx+b}        \\[4pt]
+  p                 & = (1-p)\,e^{wx+b} \\[4pt]
+  p\,(1 + e^{wx+b}) & = e^{wx+b}
+\end{align*}
+
+% ── \sol applied: student completes the derivation ────────────────────────────
+\begin{resultbox}
+  \[
+    \hat{p} \;=\; \sol[9cm]{\frac{1}{1 + e^{-(wx+b)}} \;=\; \sigmoid(wx+b)}
+  \]
+\end{resultbox}
+% ─────────────────────────────────────────────────────────────────────────────
+
+This function $\sigmoid(z) = \dfrac{1}{1+e^{-z}}$ is called the
+\textbf{sigmoid} (or logistic) function.
+
+\begin{notebox}
+  \textbf{Key properties of $\sigmoid(z)$.}
+  \begin{itemize}[nosep]
+    \item Output is always in $(0, 1)$ — valid as a probability.
+    \item $\sigmoid(0) = 0.5$: the decision boundary is where $wx + b = 0$.
+    \item As $z \to +\infty$, $\sigmoid(z) \to 1$; as $z \to -\infty$,
+          $\sigmoid(z) \to 0$.
+    \item Its derivative has the elegant form
+          $\sigmoid'(z) = \sigmoid(z)\bigl(1 - \sigmoid(z)\bigr)$
+          (see Appendix~\ref{app:sigmoid-deriv}).
+  \end{itemize}
+\end{notebox}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{The Logistic Regression Model}
+
+For $d$ features, the model generalises directly:
+
+\begin{equation}
+  \hat{p}^{(i)} = \sigmoid\!\left(\bth^{\top}\bx^{(i)}\right)
+  = \frac{1}{1 + e^{-\bth^{\top}\bx^{(i)}}},
+  \label{eq:logreg}
+\end{equation}
+
+where $\bth = [b,\, w_1,\, \ldots,\, w_d]^{\top}$ and $\bx^{(i)}$ includes a
+leading 1 for the bias (same design-matrix convention as Section~1.1).
+
+The predicted class is:
+\[
+  \hat{y}^{(i)} =
+  \begin{cases} 1 & \text{if } \hat{p}^{(i)} \ge 0.5 \\ 0 & \text{otherwise.} \end{cases}
+\]
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Cost Function: Cross-Entropy via MLE}
+
+\subsection{Setting Up the Likelihood}
+
+We model each label $y^{(i)}$ as a Bernoulli random variable with success
+probability $\hat{p}^{(i)}$:
+\[
+  P\!\left(y^{(i)} \mid \bx^{(i)};\,\bth\right)
+  = \left(\hat{p}^{(i)}\right)^{y^{(i)}}
+  \left(1 - \hat{p}^{(i)}\right)^{1 - y^{(i)}}.
+\]
+
+Assuming the $n$ observations are independent, the joint likelihood is:
+\[
+  \mathcal{L}(\bth)
+  = \prod_{i=1}^{n}
+  \left(\hat{p}^{(i)}\right)^{y^{(i)}}
+  \left(1 - \hat{p}^{(i)}\right)^{1 - y^{(i)}}.
+\]
+
+\subsection{From MLE to the Cross-Entropy Loss}
+
+Maximising $\mathcal{L}$ is equivalent to maximising the log-likelihood
+$\ell = \log \mathcal{L}$ (log is monotone):
+
+% ── \sol applied: student expands the log-likelihood ─────────────────────────
+\[
+  \ell(\bth)
+  = \sol[10cm]{\sum_{i=1}^{n}
+    \Bigl[y^{(i)} \log \hat{p}^{(i)}
+      + (1 - y^{(i)}) \log\!\left(1 - \hat{p}^{(i)}\right)\Bigr].}
+\]
+% ─────────────────────────────────────────────────────────────────────────────
+
+Minimising the \textbf{negative} log-likelihood (and averaging over $n$) gives
+the \textbf{Binary Cross-Entropy (BCE)} loss:
+
+\begin{resultbox}
+  \[
+    J(\bth)
+    = \sol[10cm]{-\frac{1}{n}\sum_{i=1}^{n}
+      \Bigl[y^{(i)} \log \hat{p}^{(i)}
+        + (1 - y^{(i)}) \log\!\left(1 - \hat{p}^{(i)}\right)\Bigr]}
+  \]
+\end{resultbox}
+
+\begin{notebox}
+  \textbf{Why cross-entropy?}
+  When $y^{(i)} = 1$, only the first term $-\log\hat{p}^{(i)}$ matters:
+  we are penalised heavily if $\hat{p}^{(i)}$ is close to 0 (confident and
+  wrong).  When $y^{(i)} = 0$, only the second term $-\log(1-\hat{p}^{(i)})$
+  matters.  The two terms switch on and off depending on the true label.
+\end{notebox}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{The Gradient and Why We Need Gradient Descent}
+
+Unlike MSE in linear regression, there is \textbf{no closed-form solution}
+for the minimiser of $J(\bth)$.  The cross-entropy loss is convex (it has a
+unique global minimum), but we cannot invert the normal equations here because
+the sigmoid is non-linear.
+
+Taking the gradient with respect to $\bth$ (using the chain rule and the
+identity $\sigmoid'(z) = \sigmoid(z)(1-\sigmoid(z))$):
+
+\begin{resultbox}
+  \[
+    \nabla_{\bth}\,J
+    = \sol[8cm]{\frac{1}{n}\sum_{i=1}^{n}
+      \Bigl(\hat{p}^{(i)} - y^{(i)}\Bigr)\,\bx^{(i)}}
+  \]
+\end{resultbox}
+
+\begin{notebox}
+  \textbf{Remarkably clean form.}
+  The gradient has exactly the same structure as in linear regression —
+  it is a weighted sum of the input vectors, where the weights are the
+  \emph{prediction errors} $(\hat{p}^{(i)} - y^{(i)})$.
+  The sigmoid ``absorbed'' all the complexity through the chain rule.
+\end{notebox}
+
+Because there is no closed form, we use \textbf{gradient descent}: starting
+from an initial $\bth^{(0)}$, we repeatedly update
+\[
+  \bth \;\leftarrow\; \bth - \alpha\,\nabla_{\bth}\,J,
+\]
+where $\alpha > 0$ is the \textbf{learning rate}.
+Gradient descent will be covered in detail in the next section.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Summary}
+
+\begin{center}
+  \renewcommand{\arraystretch}{1.5}
+  \begin{tabular}{ll}
+    \toprule
+    \textbf{Model}           & $\hat{p} = \sigmoid(\bth^{\top}\bx)$                                        \\
+    \textbf{Loss function}   & BCE: $J = -\dfrac{1}{n}\sum\bigl[y\log\hat{p} + (1-y)\log(1-\hat{p})\bigr]$ \\
+    \textbf{Gradient}        & $\nabla_{\bth}J = \dfrac{1}{n}\sum(\hat{p}^{(i)} - y^{(i)})\,\bx^{(i)}$     \\
+    \textbf{Solution method} & Gradient descent (no closed form)                                           \\
+    \textbf{Works well when} & The decision boundary is (approximately) linear                             \\
+    \bottomrule
+  \end{tabular}
+\end{center}
+
+\bigskip
+\textbf{Up next (Section~1.3):} What if no linear boundary can separate the
+classes?  We revisit the XOR dataset to show that both linear regression and
+logistic regression fail — motivating the need for non-linearity and neural
+networks.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\appendix
+\section{Derivative of the Sigmoid Function}
+\label{app:sigmoid-deriv}
+
+Let $\sigmoid(z) = (1 + e^{-z})^{-1}$.  By the chain rule:
+
+\begin{align*}
+  \sigmoid'(z)
+   & = -\frac{-e^{-z}}{(1+e^{-z})^2}
+  = \frac{e^{-z}}{(1+e^{-z})^2}.
+\end{align*}
+
+Factor out $\dfrac{1}{1+e^{-z}}$ from the numerator and denominator:
+
+\[
+  \sigmoid'(z)
+  = \frac{1}{1+e^{-z}} \cdot \frac{e^{-z}}{1+e^{-z}}
+  = \sigmoid(z) \cdot \frac{1+e^{-z}-1}{1+e^{-z}}
+  = \sigmoid(z)\bigl(1 - \sigmoid(z)\bigr).
+\]
+
+\begin{resultbox}
+  \[
+    \sigmoid'(z) = \sigmoid(z)\bigl(1 - \sigmoid(z)\bigr)
+  \]
+\end{resultbox}
+
+This compact form makes the chain-rule calculations in gradient descent
+particularly clean.
+
+\end{document}
