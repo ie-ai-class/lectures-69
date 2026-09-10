@@ -16,39 +16,17 @@
 
 ## Machine Learning Basics
 
-### Linear Regression
-
-- [PDF Exercise](/src/T02_ml_basics/S1/linear_regression_student.pdf)
-- [PDF Solution](/src/T02_ml_basics/S1/linear_regression_solution.pdf)
-
-### Classification
-
-- [PDF Exercise](/src/T02_ml_basics/S2/classification_student.pdf)
-- [PDF Solution](/src/T02_ml_basics/S2/classification_solution.pdf)
+| Topic             | Exercise                                                   | Solution                                                    |
+| ----------------- | ---------------------------------------------------------- | ----------------------------------------------------------- |
+| Linear Regression | [PDF](/src/T02_ml_basics/S1/linear_regression_student.pdf) | [PDF](/src/T02_ml_basics/S1/linear_regression_solution.pdf) |
+| Classification    | [PDF](/src/T02_ml_basics/S2/classification_student.pdf)    | [PDF](/src/T02_ml_basics/S2/classification_solution.pdf)    |
 
 ## Feedforward Networks Basics
 
-### XOR Problem
-
-- [PDF Exercise](/src/T03_ffn_basics/S1/xor_student.pdf)
-- [PDF Exercise](/src/T03_ffn_basics/S1/xor_solution.pdf)
-
-### Gradient Descent
-
-- [PDF Exercise](/src/T03_ffn_basics/S2/gradient_descent_student.pdf)
-- [PDF Solution](/src/T03_ffn_basics/S2/gradient_descent_solution.pdf)
-
-### Forward Pass
-
-- [PDF Exercise](/src/T03_ffn_basics/S3/forward_pass_student.pdf)
-- [PDF Solution](/src/T03_ffn_basics/S3/forward_pass_solution.pdf)
-
-### Backpropagation
-
-- [PDF Exercise](/src/T03_ffn_basics/S4/backpropagation_student.pdf)
-- [PDF Solution](/src/T03_ffn_basics/S4/backpropagation_solution.pdf)
-
-### Adam Optimization
-
-- [PDF Exercise](/src/T03_ffn_basics/S5/adam_student.pdf)
-- [PDF Solution](/src/T03_ffn_basics/S5/adam_solution.pdf)
+| Topic             | Exercise                                                   | Solution                                                    |
+| ----------------- | ---------------------------------------------------------- | ----------------------------------------------------------- |
+| XOR Problem       | [PDF](/src/T03_ffn_basics/S1/xor_student.pdf)              | [PDF](/src/T03_ffn_basics/S1/xor_solution.pdf)              |
+| Gradient Descent  | [PDF](/src/T03_ffn_basics/S2/gradient_descent_student.pdf) | [PDF](/src/T03_ffn_basics/S2/gradient_descent_solution.pdf) |
+| Forward Pass      | [PDF](/src/T03_ffn_basics/S3/forward_pass_student.pdf)     | [PDF](/src/T03_ffn_basics/S3/forward_pass_solution.pdf)     |
+| Backpropagation   | [PDF](/src/T03_ffn_basics/S4/backpropagation_student.pdf)  | [PDF](/src/T03_ffn_basics/S4/backpropagation_solution.pdf)  |
+| Adam Optimization | [PDF](/src/T03_ffn_basics/S5/adam_student.pdf)             | [PDF](/src/T03_ffn_basics/S5/adam_solution.pdf)             |
