@@ -1,0 +1,479 @@
+\documentclass[12pt, a4paper]{article}
+
+% ── Packages ──────────────────────────────────────────────────────────────────
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{enumitem}
+\usepackage{parskip}
+
+\geometry{margin=2.5cm}
+
+% ══════════════════════════════════════════════════════════════════════════════
+% ── Student-mode switch ───────────────────────────────────────────────────────
+%
+%   \studentmodetrue  → student version: blanks replace selected equations
+%   \studentmodefalse → instructor version: all equations shown in full
+%
+\newif\ifstudentmode
+\studentmodefalse       % default: instructor mode
+
+\ifx\studentflag\undefined
+  % no flag passed — keep studentmodefalse
+\else
+  \studentmodetrue
+\fi
+% ══════════════════════════════════════════════════════════════════════════════
+
+% ── Student-mode macros ───────────────────────────────────────────────────────
+%
+%  \sol[<width>]{<math content>}
+%    Use INSIDE a math environment (display or inline).
+%    Student mode  → underlined blank of <width> (default 6cm).
+%    Instructor mode → renders <math content> normally.
+%    Example:  \[ J(w,b) = \sol{\frac{1}{n}\sum(y_i - wx_i - b)^2} \]
+%
+\newcommand{\sol}[2][6cm]{%
+  \ifstudentmode
+    \underline{\hspace{#1}}%
+  \else
+    {#2}%
+  \fi
+}
+
+%  \soleq[<height>]{<math content>}
+%    Replaces an ENTIRE displayed equation with a blank ruled box.
+%    Student mode  → two horizontal rules with <height> gap (default 3cm).
+%    Instructor mode → renders \[ <math content> \] normally.
+%    Example:  \soleq{\bth = (\bX^\top\bX)^{-1}\bX^\top\by}
+%
+\newcommand{\soleq}[2][3cm]{%
+  \ifstudentmode
+    \par\vspace{4pt}%
+    \noindent\rule{\linewidth}{0.5pt}\\[#1]%
+    \noindent\rule{\linewidth}{0.5pt}%
+    \par\vspace{4pt}%
+  \else
+    \[#2\]%
+  \fi
+}
+% ──────────────────────────────────────────────────────────────────────────────
+
+% ── Colors & boxes ────────────────────────────────────────────────────────────
+\definecolor{mainblue}{RGB}{30, 100, 180}
+\definecolor{boxbg}{RGB}{235, 243, 255}
+\definecolor{notebg}{RGB}{255, 248, 230}
+
+\tcbuselibrary{skins, breakable}
+
+\newtcolorbox{resultbox}{
+  colback=boxbg, colframe=mainblue,
+  boxrule=1.2pt, arc=4pt,
+  title={Result},
+  fonttitle=\bfseries\color{white},
+  coltitle=white, attach boxed title to top left={yshift=-2mm, xshift=4mm},
+  boxed title style={colback=mainblue, arc=3pt}
+}
+
+\newtcolorbox{notebox}{
+  colback=notebg, colframe=orange!70!black,
+  boxrule=1pt, arc=4pt,
+  left=4pt, right=4pt
+}
+
+% ── Theorem environments ───────────────────────────────────────────────────────
+\theoremstyle{definition}
+\newtheorem{example}{Example}[section]
+
+% ── Math macros ───────────────────────────────────────────────────────────────
+\newcommand{\bth}{\boldsymbol{\theta}}
+\newcommand{\bx}{\mathbf{x}}
+\newcommand{\bX}{\mathbf{X}}
+\newcommand{\by}{\mathbf{y}}
+\newcommand{\bw}{\mathbf{w}}
+\newcommand{\xbar}{\bar{x}}
+\newcommand{\ybar}{\bar{y}}
+\newcommand{\yhat}{\hat{y}}
+
+% ── Document ──────────────────────────────────────────────────────────────────
+\begin{document}
+
+\begin{center}
+  {\LARGE \textbf{Section 1.1: Linear Regression}} \\[0.5em]
+  {\large AI Class — Lecture Notes}%
+  \ifstudentmode
+    \quad {\normalsize\color{gray}[Student Copy]}%
+  \fi
+\end{center}
+
+\vspace{1em}
+\hrule
+\vspace{1.5em}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Problem Setup}
+
+Suppose we observe $n$ data points $(x_i, y_i)$ and believe there is an
+approximately linear relationship between $x$ and $y$, corrupted by noise.
+For example:
+
+\begin{center}
+\begin{tabular}{ccccc}
+\toprule
+$x$ & 1 & 2 & 3 & 4 \\
+\midrule
+$y$ & 1 & 3 & 3 & 5 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+We want to find a line
+\[
+  \yhat = wx + b
+\]
+that best fits this data, where $w$ is the \textbf{slope (weight)} and $b$
+is the \textbf{intercept (bias)}.
+
+Because of noise, no single line passes through all four points exactly.
+We therefore need a way to quantify \emph{how wrong} our predictions are, so
+that we can find the \emph{least wrong} line.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Cost Function: Mean Squared Error}
+
+For a given choice of $w$ and $b$, the \textbf{residual} at point $i$ is
+\[
+  e_i = y_i - \yhat_i = y_i - wx_i - b.
+\]
+
+We measure the overall fit using the \textbf{Mean Squared Error (MSE)}:
+
+% ── \sol applied: student fills in the MSE formula ───────────────────────────
+\begin{equation}
+  J(w, b) = \sol[9cm]{\frac{1}{n}\sum_{i=1}^{n}(y_i - wx_i - b)^2}
+  \label{eq:mse}
+\end{equation}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Several properties make MSE a natural choice:
+\begin{itemize}[nosep]
+  \item Squaring makes all errors positive, so positive and negative residuals
+        do not cancel.
+  \item Larger errors are penalised more than smaller ones (quadratic penalty).
+  \item $J = 0$ is a perfect fit; otherwise the larger $J$, the worse the fit.
+  \item $J(w,b)$ is a smooth, bowl-shaped (convex) surface in the
+        $(w, b)$ plane, guaranteeing a unique global minimum.
+\end{itemize}
+
+\textbf{Goal:} find the values of $w$ and $b$ that minimise $J(w,b)$.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Minimising MSE: Scalar Calculus Derivation}
+
+Because $J$ is smooth and convex, the minimum occurs where both partial
+derivatives vanish simultaneously:
+\[
+  \frac{\partial J}{\partial b} = 0
+  \qquad \text{and} \qquad
+  \frac{\partial J}{\partial w} = 0.
+\]
+This gives two equations in two unknowns, which we solve sequentially.
+
+% ──────────────────────────────────────────────────────────────────────────────
+\subsection{Step 1: Solve for \texorpdfstring{$b$}{b}}
+
+Differentiating \eqref{eq:mse} with respect to $b$:
+\[
+  \frac{\partial J}{\partial b}
+  = \frac{1}{n}\sum_{i=1}^{n} 2(y_i - wx_i - b)(-1)
+  = \frac{-2}{n}\sum_{i=1}^{n}(y_i - wx_i - b) = 0.
+\]
+
+Expanding and dividing by $n$:
+\[
+  \frac{1}{n}\sum_{i=1}^{n} y_i
+  = w \cdot \frac{1}{n}\sum_{i=1}^{n} x_i + b
+  \quad \Longrightarrow \quad
+  \ybar = w\xbar + b.
+\]
+
+% ── \sol applied: student fills in the result for b ──────────────────────────
+\begin{resultbox}
+\[
+  b = \sol[7cm]{\ybar - w\xbar}
+\]
+\end{resultbox}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{notebox}
+\textbf{Interpretation.} For any slope $w$, the optimal line always passes
+through the \emph{centroid} $(\xbar, \ybar)$ of the dataset.
+\end{notebox}
+
+% ──────────────────────────────────────────────────────────────────────────────
+\subsection{Step 2: Solve for \texorpdfstring{$w$}{w}}
+
+Differentiating \eqref{eq:mse} with respect to $w$:
+\[
+  \frac{\partial J}{\partial w}
+  = \frac{-2}{n}\sum_{i=1}^{n}(y_i - wx_i - b)\,x_i = 0.
+\]
+
+Substituting $b = \ybar - w\xbar$ and letting $\tilde{x}_i = x_i - \xbar$,
+$\tilde{y}_i = y_i - \ybar$:
+
+\[
+  \sum_{i=1}^{n}(y_i - wx_i - \ybar + w\xbar)\,x_i = 0
+  \quad\Longrightarrow\quad
+  \sum_{i=1}^{n}\bigl(\tilde{y}_i - w\tilde{x}_i\bigr)\,x_i = 0.
+\]
+
+Expanding and noting that $\sum_i \tilde{x}_i = 0$:
+
+\[
+  \sum_{i=1}^{n}\tilde{y}_i\, x_i = w\sum_{i=1}^{n}\tilde{x}_i\, x_i
+  \quad\Longrightarrow\quad
+  \sum_{i=1}^{n}\tilde{x}_i\tilde{y}_i = w\sum_{i=1}^{n}\tilde{x}_i^2.
+\]
+
+% ── \sol applied: student fills in the result for w ──────────────────────────
+\begin{resultbox}
+\[
+  w = \sol[8cm]{\frac{\displaystyle\sum_{i=1}^{n}(x_i - \xbar)(y_i - \ybar)}
+                     {\displaystyle\sum_{i=1}^{n}(x_i - \xbar)^2}}
+\]
+\end{resultbox}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{notebox}
+\textbf{Interpretation.} The optimal slope equals the \emph{sample covariance}
+of $x$ and $y$ divided by the \emph{sample variance} of $x$.
+A positive covariance (both tend to increase together) yields a positive slope,
+and vice versa.
+\end{notebox}
+
+% ──────────────────────────────────────────────────────────────────────────────
+\subsection{Numerical Result}
+
+For the dataset above, $\xbar = 2.5$ and $\ybar = 3$:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{ccccc}
+\toprule
+$i$ & $x_i - \xbar$ & $y_i - \ybar$
+    & $(x_i-\xbar)(y_i-\ybar)$ & $(x_i-\xbar)^2$ \\
+\midrule
+1 & $-1.5$ & $-2$ & $3.0$ & $2.25$ \\
+2 & $-0.5$ & $\phantom{-}0$ & $0.0$ & $0.25$ \\
+3 & $\phantom{-}0.5$ & $\phantom{-}0$ & $0.0$ & $0.25$ \\
+4 & $\phantom{-}1.5$ & $\phantom{-}2$ & $3.0$ & $2.25$ \\
+\midrule
+  & & \textbf{Sum} & $6$ & $5$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ── \sol applied: student computes w and b from the sums ─────────────────────
+\[
+  w = \sol{\dfrac{6}{5} = 1.2},
+  \qquad
+  b = \sol{3 - 1.2 \times 2.5 = 0}.
+\]
+
+The fitted line is $\yhat = \sol{1.2\,x}$, with:
+
+\[
+  \mathrm{MSE}
+  = \frac{(-0.2)^2 + (0.6)^2 + (-0.6)^2 + (0.2)^2}{4}
+  = \sol{\dfrac{0.8}{4} = 0.2} \neq 0.
+\]
+% ─────────────────────────────────────────────────────────────────────────────
+
+The non-zero MSE reflects irreducible noise in the data — not a failure of the
+method.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Generalisation: Multiple Features}
+
+With a single feature we derived two scalar equations. In practice, a data
+point often has $d$ features $x_1, x_2, \ldots, x_d$, and the model becomes:
+\[
+  \yhat = w_1 x_1 + w_2 x_2 + \cdots + w_d x_d + b.
+\]
+
+Taking a partial derivative for each of the $d+1$ parameters and setting them
+to zero would produce $d+1$ scalar equations with the same structure. Rather
+than repeating this process, we rewrite everything in \textbf{matrix form},
+which handles all parameters simultaneously.
+
+% ──────────────────────────────────────────────────────────────────────────────
+\subsection{Matrix Notation}
+
+Collect all parameters into a single vector:
+\[
+  \bth = \begin{bmatrix} b \\ w_1 \\ \vdots \\ w_d \end{bmatrix}
+  \in \mathbb{R}^{d+1}.
+\]
+
+Stack all $n$ data points row-by-row into the \textbf{design matrix}
+$\bX \in \mathbb{R}^{n \times (d+1)}$, prepending a column of ones to account
+for the bias:
+\[
+  \bX =
+  \begin{bmatrix}
+    1 & x_1^{(1)} & x_2^{(1)} & \cdots & x_d^{(1)} \\
+    1 & x_1^{(2)} & x_2^{(2)} & \cdots & x_d^{(2)} \\
+    \vdots & \vdots & \vdots & \ddots & \vdots \\
+    1 & x_1^{(n)} & x_2^{(n)} & \cdots & x_d^{(n)}
+  \end{bmatrix},
+  \qquad
+  \by =
+  \begin{bmatrix} y^{(1)} \\ y^{(2)} \\ \vdots \\ y^{(n)} \end{bmatrix}.
+\]
+
+With this notation, the vector of all predictions is simply $\bX\bth$, and the
+MSE cost becomes:
+
+% ── \sol applied: student writes the matrix form of MSE ──────────────────────
+\[
+  J(\bth) = \sol[8cm]{\frac{1}{n}\left\|\by - \bX\bth\right\|^2}
+\]
+% ─────────────────────────────────────────────────────────────────────────────
+
+% ──────────────────────────────────────────────────────────────────────────────
+\subsection{The Normal Equations}
+
+Setting the gradient of $J$ with respect to $\bth$ to zero and expanding
+step by step:
+
+\begin{align*}
+  &\nabla_{\bth}\, J = \mathbf{0} \\[6pt]
+  \Rightarrow\;&
+    \nabla_{\bth}\,\frac{1}{n}\|\bX\bth - \by\|_2^2 = \mathbf{0} \\[6pt]
+  \Rightarrow\;&
+    \nabla_{\bth}
+    \left(\bX\bth - \by\right)^{\!\top}
+    \left(\bX\bth - \by\right) = \mathbf{0} \\[6pt]
+  \Rightarrow\;&
+% ── \sol applied: student expands the quadratic form ────────────────────────
+    \nabla_{\bth}\!\left(
+      \sol[9cm]{\bth^{\top}\bX^{\top}\bX\bth
+      - 2\bth^{\top}\bX^{\top}\by
+      + \by^{\top}\by}
+    \right) = \mathbf{0} \\[6pt]
+% ────────────────────────────────────────────────────────────────────────────
+  \Rightarrow\;&
+% ── \sol applied: student applies the gradient ───────────────────────────────
+    \sol[7cm]{2\bX^{\top}\bX\bth - 2\bX^{\top}\by} = \mathbf{0} \\[6pt]
+% ────────────────────────────────────────────────────────────────────────────
+  \Rightarrow\;&
+    \bX^{\top}\bX\,\bth = \bX^{\top}\by.
+\end{align*}
+
+Provided $\bX^{\top}\bX$ is invertible, the unique solution is:
+
+% ── \sol applied: student writes the normal equations result ─────────────────
+\begin{resultbox}
+\[
+  \bth = \sol[8cm]{\left(\bX^{\top}\bX\right)^{-1}\bX^{\top}\by}
+\]
+\end{resultbox}
+% ─────────────────────────────────────────────────────────────────────────────
+
+This is the \textbf{Normal Equation} — a single closed-form formula that solves
+linear regression for any number of features $d$ and any number of data points
+$n$ (provided $n > d+1$ and the columns of $\bX$ are linearly independent).
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Example: Two Binary Features}
+
+\begin{example}
+Consider a dataset with two binary inputs where the true relationship is
+$y = x_1 + x_2$:
+
+\begin{center}
+\begin{tabular}{ccc}
+\toprule
+$x_1$ & $x_2$ & $y$ \\
+\midrule
+0 & 0 & 0 \\
+0 & 1 & 1 \\
+1 & 0 & 1 \\
+1 & 1 & 2 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The design matrix and target vector are:
+\[
+  \bX =
+  \begin{bmatrix} 1 & 0 & 0 \\ 1 & 0 & 1 \\ 1 & 1 & 0 \\ 1 & 1 & 1 \end{bmatrix},
+  \qquad
+  \by =
+  \begin{bmatrix} 0 \\ 1 \\ 1 \\ 2 \end{bmatrix}.
+\]
+
+Computing:
+\[
+  \bX^{\top}\bX =
+  \begin{bmatrix} 4 & 2 & 2 \\ 2 & 2 & 1 \\ 2 & 1 & 2 \end{bmatrix},
+  \qquad
+  \bX^{\top}\by =
+  \begin{bmatrix} 4 \\ 3 \\ 3 \end{bmatrix}.
+\]
+
+Solving $(\bX^{\top}\bX)\,\bth = \bX^{\top}\by$ gives:
+
+% ── \soleq applied: student writes the final θ solution ──────────────────────
+\soleq[2.5cm]{%
+  \bth =
+  \begin{bmatrix} b \\ w_1 \\ w_2 \end{bmatrix}
+  =
+  \begin{bmatrix} 0 \\ 1 \\ 1 \end{bmatrix}
+}
+% ─────────────────────────────────────────────────────────────────────────────
+
+so $\yhat = \sol{x_1 + x_2}$ with $\mathrm{MSE} = \sol[2cm]{0}$.
+
+The normal equations recover the exact underlying relationship because the
+data is truly linear.
+\end{example}
+
+\begin{notebox}
+\textbf{Looking ahead.}
+In Section~1.3 we will use the same four input points
+$\{(0,0),\,(0,1),\,(1,0),\,(1,1)\}$ but change the output labels to
+$\{0,\,1,\,1,\,0\}$ (the XOR function). Applying the normal equations to
+that dataset yields $w_1 = w_2 = 0$, $b = \tfrac{1}{2}$ — the model simply
+predicts the mean $0.5$ everywhere, achieving $\mathrm{MSE} = 0.25$.
+This is the best any linear model can do on XOR, which motivates the
+need for non-linearity.
+\end{notebox}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Summary}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{ll}
+\toprule
+\textbf{Model}             & $\yhat = \bth^{\top}\bx$ \\
+\textbf{Loss function}     & MSE: $J = \dfrac{1}{n}\|\by - \bX\bth\|^2$ \\
+\textbf{Closed-form solution} & Normal equations: $\bth = (\bX^{\top}\bX)^{-1}\bX^{\top}\by$ \\
+\textbf{Works well when}   & The true relationship is (approximately) linear \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\bigskip
+\textbf{Up next (Section~1.2):} What if the output $y$ is a \emph{category}
+rather than a continuous number? Predicting a probability requires a
+different model and a different loss function — logistic regression with
+cross-entropy.
+
+\end{document}

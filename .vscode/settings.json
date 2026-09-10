@@ -1,0 +1,11 @@
+{
+  "markdown.copyFiles.destination": {
+    // "**/*": "${documentDirName}/img/paste-${unixTime}.png"
+    "**/*": "./img/paste-${unixTime}.png"
+  },
+  "workbench.editorAssociations": {
+    "*.md": "default",
+    "*.markdown": "default"
+  },
+  "latex-workshop.formatting.latex": "latexindent"
+}
