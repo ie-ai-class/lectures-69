@@ -1,0 +1,251 @@
+\documentclass[12pt, a4paper]{article}
+
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{enumitem}
+\usepackage{parskip}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, calc}
+
+\geometry{margin=2.5cm}
+
+\newif\ifstudentmode
+\studentmodefalse
+\ifx\studentflag\undefined\else\studentmodetrue\fi
+
+\newcommand{\sol}[2][6cm]{%
+  \ifstudentmode\underline{\hspace{#1}}\else{#2}\fi}
+\newcommand{\soleq}[2][3cm]{%
+  \ifstudentmode
+    \par\vspace{4pt}\noindent\rule{\linewidth}{0.5pt}\\[#1]%
+    \noindent\rule{\linewidth}{0.5pt}\par\vspace{4pt}%
+  \else\[#2\]\fi}
+
+\definecolor{mainblue}{RGB}{30, 100, 180}
+\definecolor{boxbg}{RGB}{235, 243, 255}
+\definecolor{notebg}{RGB}{255, 248, 230}
+\definecolor{warnbg}{RGB}{255, 235, 235}
+\definecolor{greenbg}{RGB}{230, 255, 235}
+
+\tcbuselibrary{skins, breakable}
+
+\newtcolorbox{resultbox}{colback=boxbg,colframe=mainblue,boxrule=1.2pt,arc=4pt,
+  title={Result},fonttitle=\bfseries\color{white},coltitle=white,
+  attach boxed title to top left={yshift=-2mm,xshift=4mm},
+  boxed title style={colback=mainblue,arc=3pt}}
+
+\newtcolorbox{notebox}{colback=notebg,colframe=orange!70!black,
+  boxrule=1pt,arc=4pt,left=4pt,right=4pt}
+
+\newtcolorbox{warnbox}{colback=warnbg,colframe=red!60!black,
+  boxrule=1pt,arc=4pt,left=4pt,right=4pt}
+
+\newtcolorbox{stepbox}[1]{colback=greenbg,colframe=green!50!black,
+  boxrule=1pt,arc=4pt,title={#1},fonttitle=\bfseries,coltitle=green!30!black}
+
+\theoremstyle{definition}
+\newtheorem{example}{Example}[section]
+
+\newcommand{\muB}{\mu_{\mathcal{B}}}
+\newcommand{\sigB}{\sigma^2_{\mathcal{B}}}
+
+\begin{document}
+
+\begin{center}
+  {\LARGE \textbf{Section 4.4: Batch Normalisation}} \\[0.3em]
+  {\large\itshape Keeping Activations Well-Behaved During Training} \\[0.5em]
+  {\large AI Class --- Lecture Notes}%
+  \ifstudentmode\quad{\normalsize\color{gray}[Student Copy]}\fi
+\end{center}
+
+\vspace{1em}\hrule\vspace{1.5em}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{The Problem: Shifting Activations}
+
+As weights update during training, the distribution of pre-activations
+entering each layer shifts.  The next layer must constantly adapt to a
+moving input --- slowing training and making it unstable.
+
+For example, if the pre-activations $z$ drift to large positive values,
+the sigmoid $\sigma(z) \to 1$ and its gradient $\sigma'(z) \to 0$.
+Gradients vanish and training stalls.
+
+\textbf{Batch normalisation (BN)} fixes this by normalising the
+pre-activations to zero mean and unit variance \emph{within each
+mini-batch}, right before the activation function.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{The Algorithm}
+
+Given a mini-batch $\mathcal{B} = \{z_1, z_2, \ldots, z_m\}$ of
+pre-activations for one neuron:
+
+\begin{resultbox}
+\textbf{Step 1.} Compute the batch mean and variance:
+\[
+  \muB = \frac{1}{m}\sum_{i=1}^{m} z_i,
+  \qquad
+  \sigB = \frac{1}{m}\sum_{i=1}^{m}(z_i - \muB)^2
+\]
+
+\textbf{Step 2.} Normalise each value:
+\[
+  \hat{z}_i = \frac{z_i - \muB}{\sqrt{\sigB + \varepsilon}}
+\]
+
+\textbf{Step 3.} Scale and shift with learned parameters $\gamma$ and $\beta$:
+\[
+  \tilde{z}_i = \gamma\,\hat{z}_i + \beta
+\]
+
+The output $\tilde{z}_i$ is passed to the activation function.
+\end{resultbox}
+
+$\varepsilon \approx 10^{-5}$ prevents division by zero.
+$\gamma$ and $\beta$ are \textbf{learnable}: the network can undo the
+normalisation if that turns out to be best for the task.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Hand-Calculated Example}
+
+Mini-batch of $m = 4$ pre-activations (before the hidden-layer sigmoid):
+\[
+  \mathcal{B} = \{0.5,\; 1.2,\; -0.3,\; 0.8\}
+\]
+
+% ──────────────────────────────────────────────────────────────────────────────
+\begin{stepbox}{Step 1 \quad Batch mean and variance}
+
+\[
+  \muB = \frac{0.5 + 1.2 + (-0.3) + 0.8}{4}
+       = \frac{2.2}{4}
+       = \sol[3cm]{0.55}
+\]
+
+Deviations $(z_i - \muB)$:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{cccc}
+\toprule
+$z_i$ & $z_i - \muB$ & $(z_i - \muB)^2$ \\
+\midrule
+$0.5$  & $-0.05$ & $0.0025$ \\
+$1.2$  & $\phantom{-}0.65$ & $0.4225$ \\
+$-0.3$ & $-0.85$ & $0.7225$ \\
+$0.8$  & $\phantom{-}0.25$ & $0.0625$ \\
+\midrule
+       &         & $\Sigma = 1.2100$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\[
+  \sigB = \frac{1.2100}{4} = \sol[3cm]{0.3025}
+  \qquad
+  \sqrt{\sigB} = \sol[3cm]{0.55}
+\]
+\end{stepbox}
+
+\vspace{0.8em}
+
+% ──────────────────────────────────────────────────────────────────────────────
+\begin{stepbox}{Step 2 \quad Normalise}
+
+Divide each deviation by $\sqrt{\sigB} = 0.55$ (ignoring $\varepsilon$):
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{ccc}
+\toprule
+$z_i$ & $z_i - \muB$ & $\hat{z}_i = (z_i-\muB)\,/\,0.55$ \\
+\midrule
+$0.5$  & $-0.05$ & \sol[3cm]{$-0.091$} \\
+$1.2$  & $\phantom{-}0.65$ & \sol[3cm]{$\phantom{-}1.182$} \\
+$-0.3$ & $-0.85$ & \sol[3cm]{$-1.545$} \\
+$0.8$  & $\phantom{-}0.25$ & \sol[3cm]{$\phantom{-}0.455$} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Verify: mean$(\hat{z}) \approx 0$ and variance$(\hat{z}) \approx 1$. \checkmark
+\end{stepbox}
+
+\vspace{0.8em}
+
+% ──────────────────────────────────────────────────────────────────────────────
+\begin{stepbox}{Step 3 \quad Scale and shift}
+
+Using the initial values $\gamma = 1$, $\beta = 0$
+(the network will learn these):
+\[
+  \tilde{z}_i = 1 \cdot \hat{z}_i + 0 = \hat{z}_i
+\]
+
+The output $\tilde{z}_i$ is passed to the activation function.  With
+$\gamma = 1, \beta = 0$, BN simply standardises the batch.
+After training, $\gamma$ and $\beta$ may take any value.
+\end{stepbox}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Where to Place Batch Normalisation}
+
+BN is inserted \textbf{between the linear transformation and the activation
+function}:
+
+\[
+  \mathbf{z} = \mathbf{W}\mathbf{x} + \mathbf{b}
+  \;\longrightarrow\;
+  \tilde{\mathbf{z}} = \text{BN}(\mathbf{z})
+  \;\longrightarrow\;
+  \mathbf{h} = \sigma(\tilde{\mathbf{z}})
+\]
+
+\begin{notebox}
+When BN is used, the bias $\mathbf{b}$ in the linear layer is redundant:
+BN subtracts the batch mean, which removes any constant shift.
+In PyTorch, set \texttt{bias=False} in a linear layer that is followed by
+\texttt{nn.BatchNorm1d}.
+\end{notebox}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Training vs Inference}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{lll}
+\toprule
+Phase & Mean and variance used & Source \\
+\midrule
+Training   & Mini-batch $\muB$, $\sigB$ & Computed from current batch \\
+Inference  & Running mean $\bar\mu$, running var $\bar\sigma^2$ &
+             Accumulated from all training batches \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+During training, PyTorch tracks a running average of $\muB$ and $\sigB$
+over all batches.  At inference, these stored statistics are used so that
+predictions on single examples are stable.
+
+\begin{warnbox}
+Like dropout, BN behaves differently in training and inference mode.
+Always call \texttt{model.train()} before training and
+\texttt{model.eval()} before evaluation.
+Forgetting this is one of the most common bugs in PyTorch projects.
+\end{warnbox}
+
+\begin{notebox}
+\textbf{PyTorch.}
+\texttt{nn.BatchNorm1d(num\_features)} for fully-connected layers;
+\texttt{nn.BatchNorm2d(num\_channels)} for convolutional layers.
+See \texttt{code\_examples.py} for a complete example.
+\end{notebox}
+
+\end{document}
