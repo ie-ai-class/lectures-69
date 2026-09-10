@@ -11,8 +11,8 @@
 
 ## Introduction
 
-- [HTML](/src/T01_intro/T01_intro.html)
-- [PDF](/src/T01_intro/T01_intro.pdf)
+- [HTML](/src/T01_intro/T01.html)
+- [PDF](/src/T01_intro/T01.pdf)
 
 ## Machine Learning Basics
 
