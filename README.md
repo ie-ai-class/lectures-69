@@ -25,3 +25,30 @@
 
 - [PDF Exercise](/src/T02_ml_basics/S2/classification_student.pdf)
 - [PDF Solution](/src/T02_ml_basics/S2/classification_solution.pdf)
+
+## Feedforward Neural Networks Basics
+
+### XOR Problem
+
+- [PDF Exercise](/src/T03_ffnn_basics/S1/xor_student.pdf)
+- [PDF Exercise](/src/T03_ffnn_basics/S1/xor_solution.pdf)
+
+### Gradient Descent
+
+- [PDF Exercise](/src/T03_ffnn_basics/S2/gradient_descent_student.pdf)
+- [PDF Solution](/src/T03_ffnn_basics/S2/gradient_descent_solution.pdf)
+
+### Forward Pass
+
+- [PDF Exercise](/src/T03_ffnn_basics/S3/forward_pass_student.pdf)
+- [PDF Solution](/src/T03_ffnn_basics/S3/forward_pass_solution.pdf)
+
+### Backpropagation
+
+- [PDF Exercise](/src/T03_ffnn_basics/S4/backpropagation_student.pdf)
+- [PDF Solution](/src/T03_ffnn_basics/S4/backpropagation_solution.pdf)
+
+### Adam Optimization
+
+- [PDF Exercise](/src/T03_ffnn_basics/S5/adam_student.pdf)
+- [PDF Solution](/src/T03_ffnn_basics/S5/adam_solution.pdf)
