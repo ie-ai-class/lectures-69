@@ -5,23 +5,23 @@
 - Semester: `Winter 2026`
 - Instructors: [Asst. Prof. Nirand Pisutha-Arnond, Ph.D., Department of Industrial Engineering](https://ie.eng.cmu.ac.th/en/people/faculty/56)
 
-## Lecture VDO Playlist
+# Lecture VDO Playlist
 
 - [AI Class 2569](#)
 
-## Introduction
+# Introduction
 
 - [HTML](/src/T01_intro/T01.html)
 - [PDF](/src/T01_intro/T01.pdf)
 
-## Machine Learning Basics
+# Machine Learning Basics
 
 | Topic             | Exercise                                                   | Solution                                                    |
 | ----------------- | ---------------------------------------------------------- | ----------------------------------------------------------- |
 | Linear Regression | [PDF](/src/T02_ml_basics/S1/linear_regression_student.pdf) | [PDF](/src/T02_ml_basics/S1/linear_regression_solution.pdf) |
 | Classification    | [PDF](/src/T02_ml_basics/S2/classification_student.pdf)    | [PDF](/src/T02_ml_basics/S2/classification_solution.pdf)    |
 
-## Feedforward Networks Basics
+# Feedforward Networks Basics
 
 | Topic             | Exercise                                                   | Solution                                                    |
 | ----------------- | ---------------------------------------------------------- | ----------------------------------------------------------- |
